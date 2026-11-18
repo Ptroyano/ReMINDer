@@ -59,8 +59,8 @@ O servidor decide **quando o alarme está ativo**; o navegador só consulta `/ap
 
 ```bash
 # 1. Clonar o repositório
-git clone <URL-DO-REPOSITORIO>
-cd reminder-poc
+git clone https://github.com/Ptroyano/ReMINDer.git
+cd ReMINDer
 
 # 2. Criar e ativar um ambiente virtual
 python -m venv .venv
