@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1f2a5a">
+  <title>ReMINDer</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%8F%B0%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="marca">
+      <span class="marca-logo" aria-hidden="true">⏰</span>
+      <div>
+        <h1>re<strong>MIND</strong>er</h1>
+        <p>Agenda com alarme que só para quando você faz.</p>
+      </div>
+    </div>
+    <button id="btn-som-topo" class="btn btn-suave" type="button">🔇 Ativar som</button>
+  </header>
+
+  <main class="layout">
+    <!-- Tela 1: Planejamento noturno / cadastro da atividade -->
+    <section class="cartao" aria-labelledby="titulo-planejar">
+      <h2 id="titulo-planejar">Planejar a atividade</h2>
+      <p class="dica">Preencha na noite anterior. Você pode ajustar depois.</p>
+
+      <form id="form-tarefa" autocomplete="off">
+        <label for="f-titulo">O que você vai fazer?</label>
+        <input id="f-titulo" name="titulo" type="text" maxlength="100" placeholder="Estudar Algoritmos" required>
+
+        <div class="linha">
+          <div>
+            <label for="f-data">Dia</label>
+            <input id="f-data" name="data" type="date" required>
+          </div>
+          <div>
+            <label for="f-hora">Início</label>
+            <input id="f-hora" name="hora_inicio" type="time" value="09:00" required>
+          </div>
+        </div>
+
+        <div class="linha">
+          <div>
+            <label for="f-duracao">Duração (min)</label>
+            <input id="f-duracao" name="duracao_min" type="number" min="5" max="720" step="5" value="90" required>
+          </div>
+          <div>
+            <label for="f-intervalo">Repetir o sinal a cada</label>
+            <select id="f-intervalo" name="intervalo_seg">
+              <option value="15">15 segundos</option>
+              <option value="30" selected>30 segundos</option>
+              <option value="60">1 minuto</option>
+              <option value="120">2 minutos</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="check">
+          <input id="f-neuro" name="neurofeedback" type="checkbox" checked>
+          <span>Ativar sinal sonoro de neuro-feedback</span>
+        </label>
+
+        <button class="btn btn-primario" type="submit">Agendar atividade</button>
+        <p id="form-erro" class="erro" role="alert" hidden></p>
+      </form>
+    </section>
+
+    <!-- Tela 4: Agenda diária (reordenada após ajustes) -->
+    <section class="cartao" aria-labelledby="titulo-agenda">
+      <div class="agenda-topo">
+        <h2 id="titulo-agenda">Agenda do dia</h2>
+        <div class="seletor-dia">
+          <button id="btn-hoje" class="chip" type="button">Hoje</button>
+          <button id="btn-amanha" class="chip" type="button">Amanhã</button>
+          <input id="agenda-data" type="date" aria-label="Escolher dia da agenda">
+        </div>
+      </div>
+
+      <div id="agenda-aviso" class="aviso" role="status" hidden></div>
+      <ol id="agenda-lista" class="agenda" aria-live="polite"></ol>
+      <p id="agenda-vazia" class="vazio" hidden>Nenhuma atividade neste dia. Agende a primeira ao lado.</p>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    Prova de Conceito · Projeto Integrador Senac EAD (TADS/TSI) · Grupo 17
+  </footer>
+
+  <!-- Tela 2: Sinal sonoro ativo (modo interrupção) -->
+  <div id="alarme" class="alarme" role="alertdialog" aria-modal="true" aria-labelledby="alarme-titulo" hidden>
+    <div class="alarme-caixa">
+      <div class="alarme-pulso" aria-hidden="true">🔔</div>
+      <p class="alarme-rotulo">Hora de começar</p>
+      <h2 id="alarme-titulo">—</h2>
+
+      <div class="cronometro" aria-live="off">
+        <span id="alarme-cron-rotulo">Tempo restante</span>
+        <strong id="alarme-cron">00:00</strong>
+        <small id="alarme-inicio">—</small>
+      </div>
+
+      <div class="alarme-acoes">
+        <button id="btn-concluir" class="btn btn-sucesso btn-grande" type="button">✔ Informar Atividade Realizada</button>
+        <button id="btn-ajustar" class="btn btn-contorno btn-grande" type="button">⏱ Alterar Duração / Reagendar</button>
+      </div>
+
+      <!-- Espaço reservado: o aviso de som aparece sem deslocar os botões principais -->
+      <div class="reserva-som">
+        <button id="btn-som-alarme" class="btn btn-aviso" type="button" hidden>🔇 Toque aqui para ativar o som</button>
+      </div>
+      <p id="alarme-outros" class="dica" hidden></p>
+    </div>
+  </div>
+
+  <!-- Modal de edição rápida de tarefa -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo" hidden>
+    <div class="modal-caixa">
+      <h2 id="modal-titulo">Edição rápida</h2>
+      <p id="modal-tarefa" class="dica"></p>
+
+      <fieldset>
+        <legend>Precisa de mais tempo?</legend>
+        <div class="chips" id="modal-chips">
+          <button class="chip chip-grande" type="button" data-min="10">+10 min</button>
+          <button class="chip chip-grande" type="button" data-min="15">+15 min</button>
+          <button class="chip chip-grande" type="button" data-min="30">+30 min</button>
+        </div>
+        <p class="dica">O alarme faz uma pausa pelo tempo acrescentado e volta a tocar.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Ou reprograme o horário</legend>
+        <div class="linha">
+          <div>
+            <label for="m-data">Dia</label>
+            <input id="m-data" type="date">
+          </div>
+          <div>
+            <label for="m-hora">Novo horário</label>
+            <input id="m-hora" type="time">
+          </div>
+        </div>
+      </fieldset>
+
+      <p id="modal-erro" class="erro" role="alert" hidden></p>
+      <div class="modal-acoes">
+        <button id="modal-cancelar" class="btn btn-contorno" type="button">Voltar</button>
+        <button id="modal-confirmar" class="btn btn-primario" type="button">Confirmar Reagendamento</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
