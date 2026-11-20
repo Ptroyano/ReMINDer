@@ -47,7 +47,7 @@ Estes pontos não estavam definidos na 1ª etapa e foram decididos aqui. **O gru
 1. **Acrescentar tempo pausa o alarme.** Ao escolher +10/+15/+30 min, a duração da atividade aumenta e o alarme fica pausado pelo tempo acrescentado, voltando a tocar depois. Assim a pessoa não é "perturbada" enquanto usa o tempo extra, mas continua sendo cobrada.
 2. **Reagendar exige horário futuro.** Reagendar para um horário já passado faria o alarme tocar de novo imediatamente.
 3. **Sobreposição só é sinalizada, não corrigida.** Quando o tempo extra invade a atividade seguinte, a agenda mostra o aviso; a decisão de remanejar continua com a pessoa.
-4. **Intervalo do sinal configurável** por atividade (15 s, 30 s, 1 min, 2 min).
+4. **Intensidade do alarme configurável** por atividade (contínuo, 10 s, 30 s ou 1 min).
 
 ## 5. Fora do escopo desta PoC
 

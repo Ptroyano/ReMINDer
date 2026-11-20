@@ -192,3 +192,48 @@ def test_historico_de_eventos(client, relogio):
     client.post(f"/api/tarefas/{t['id']}/concluir")
     tipos = [e["tipo"] for e in client.get(f"/api/tarefas/{t['id']}/eventos").get_json()["eventos"]]
     assert tipos == ["criada", "estendida", "concluida"]
+
+
+# ------------------------------------------------- Fuso horário e horário passado
+def test_servidor_usa_o_fuso_do_navegador(tmp_path):
+    """Sem relógio falso, o servidor usa o cabeçalho X-Tz-Offset (180 = Brasília)."""
+    from datetime import timezone
+
+    app = create_app(db_path=str(tmp_path / "tz.db"))
+    c = app.test_client()
+    esperado = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=3)
+    r = c.get("/api/saude", headers={"X-Tz-Offset": "180"}).get_json()
+    obtido = datetime.strptime(r["agora"], "%Y-%m-%dT%H:%M:%S")
+    assert abs((obtido - esperado).total_seconds()) < 5
+
+
+def test_cabecalho_de_fuso_invalido_e_ignorado(tmp_path):
+    app = create_app(db_path=str(tmp_path / "tz2.db"))
+    r = app.test_client().get("/api/saude", headers={"X-Tz-Offset": "abc"})
+    assert r.status_code == 200
+
+
+def test_nao_permite_agendar_no_passado(client):
+    resp = client.post(
+        "/api/tarefas",
+        json={"titulo": "Ontem", "data": "2026-11-10", "hora_inicio": "01:36", "duracao_min": 90},
+    )
+    assert resp.status_code == 400
+    assert "já passou" in resp.get_json()["erro"]
+
+
+def test_permite_agendar_para_o_minuto_atual(client, relogio):
+    relogio.agora = datetime(2026, 11, 20, 21, 0, 40)
+    resp = client.post(
+        "/api/tarefas",
+        json={"titulo": "Agora", "data": "2026-11-20", "hora_inicio": "21:00", "duracao_min": 30},
+    )
+    assert resp.status_code == 201
+
+
+def test_intensidade_padrao_e_continua(client):
+    assert criar(client)["intervalo_seg"] == 3
+    assert client.post(
+        "/api/tarefas",
+        json={"titulo": "X", "data": "2026-11-21", "hora_inicio": "09:00", "intervalo_seg": 1},
+    ).status_code == 400

@@ -8,7 +8,7 @@ comando sobe tudo: `python backend/app.py`.
 """
 import os
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from flask import Flask, current_app, g, jsonify, request
 
@@ -32,7 +32,18 @@ class ApiError(Exception):
 # Utilidades
 # --------------------------------------------------------------------------
 def agora():
-    """Horário atual (injetável para testes via app.config['CLOCK'])."""
+    """Horário atual na hora local de quem está usando o app.
+
+    O navegador informa seu fuso no cabeçalho X-Tz-Offset (minutos, no formato de
+    Date.getTimezoneOffset(): 180 para Brasília). Assim o app funciona certo mesmo
+    com o servidor em UTC (ex.: GitHub Codespaces). Nos testes, um relógio falso
+    (app.config['CLOCK']) substitui tudo isso.
+    """
+    if current_app.config.get("USE_CLIENT_TZ"):
+        offset = request.headers.get("X-Tz-Offset", type=int)
+        if offset is not None and -840 <= offset <= 840:
+            utc = datetime.now(timezone.utc).replace(tzinfo=None)
+            return (utc - timedelta(minutes=offset)).replace(microsecond=0)
     return current_app.config["CLOCK"]().replace(microsecond=0)
 
 
@@ -179,6 +190,7 @@ def create_app(db_path=None, clock=None):
     app = Flask(__name__, static_folder=FRONT_DIR, static_url_path="")
     app.config["DB_PATH"] = db_path or os.environ.get("REMINDER_DB", DEFAULT_DB)
     app.config["CLOCK"] = clock or datetime.now
+    app.config["USE_CLIENT_TZ"] = clock is None
     init_db(app.config["DB_PATH"])
 
     @app.teardown_appcontext
@@ -224,8 +236,11 @@ def create_app(db_path=None, clock=None):
         data = parse_data(d.get("data"))
         hora = parse_hora(d.get("hora_inicio"))
         duracao = parse_int(d.get("duracao_min", 30), "duracao_min", 5, 720)
-        intervalo = parse_int(d.get("intervalo_seg", 30), "intervalo_seg", 5, 600)
+        intervalo = parse_int(d.get("intervalo_seg", 3), "intervalo_seg", 2, 600)
         neuro = 1 if d.get("neurofeedback", True) else 0
+        inicio = datetime.strptime(f"{data} {hora}", f"{FMT_DATA} {FMT_HORA}")
+        if inicio < agora().replace(second=0):
+            raise ApiError("Esse horário já passou. Escolha um horário a partir de agora.")
 
         db = get_db()
         cur = db.execute(
@@ -251,7 +266,7 @@ def create_app(db_path=None, clock=None):
         if "duracao_min" in d:
             campos["duracao_min"] = parse_int(d["duracao_min"], "duracao_min", 5, 720)
         if "intervalo_seg" in d:
-            campos["intervalo_seg"] = parse_int(d["intervalo_seg"], "intervalo_seg", 5, 600)
+            campos["intervalo_seg"] = parse_int(d["intervalo_seg"], "intervalo_seg", 2, 600)
         if "neurofeedback" in d:
             campos["neurofeedback"] = 1 if d["neurofeedback"] else 0
         if not campos:

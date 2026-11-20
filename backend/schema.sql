@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS tarefas (
     hora_inicio     TEXT    NOT NULL,                       -- HH:MM
     duracao_min     INTEGER NOT NULL CHECK (duracao_min BETWEEN 5 AND 1440),
     neurofeedback   INTEGER NOT NULL DEFAULT 1,             -- 1 = alarme persistente ligado
-    intervalo_seg   INTEGER NOT NULL DEFAULT 30,            -- intervalo entre os sinais sonoros
+    intervalo_seg   INTEGER NOT NULL DEFAULT 3,             -- intervalo entre os sinais sonoros
     status          TEXT    NOT NULL DEFAULT 'agendada'
                     CHECK (status IN ('agendada', 'concluida')),
     silenciado_ate  TEXT,                                   -- alarme pausado por "+ tempo" (AAAA-MM-DDTHH:MM:SS)

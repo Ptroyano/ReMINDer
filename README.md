@@ -59,8 +59,8 @@ O servidor decide **quando o alarme está ativo**; o navegador só consulta `/ap
 
 ```bash
 # 1. Clonar o repositório
-git clone https://github.com/Ptroyano/ReMINDer.git
-cd ReMINDer
+git clone <URL-DO-REPOSITORIO>
+cd reminder-poc
 
 # 2. Criar e ativar um ambiente virtual
 python -m venv .venv
@@ -86,14 +86,14 @@ Abra **http://localhost:8000** no navegador.
 python -m pytest backend/tests -q
 ```
 
-Os 16 testes cobrem: validações, alarme no horário e persistente, parada só ao concluir, pausa por acréscimo de tempo, reagendamento, detecção de conflito e histórico de eventos.
+Os 21 testes cobrem: validações, alarme no horário e persistente, parada só ao concluir, pausa por acréscimo de tempo, reagendamento, detecção de conflito, histórico de eventos, fuso horário do navegador e recusa de horário passado.
 
 ### Como demonstrar a jornada (2 minutos)
 
 1. Clique em **🔇 Ativar som** (navegadores só liberam áudio após um clique).
-2. Em **Planejar a atividade**, cadastre "Estudar Algoritmos", 09:00, 90 min, neuro-feedback ligado → **Agendar atividade**.
+2. Em **Planejar a atividade**, cadastre "Estudar Algoritmos", 09:00, 90 min, neuro-feedback ligado e intensidade "Intenso" → **Agendar atividade**.
 3. Na agenda, clique em **▶ Disparar agora (demo)** para simular que chegou o horário (atalho só de demonstração, para não esperar o relógio).
-4. A tela de interrupção abre e o sinal repete a cada 30 s. **Recarregue a página**: o alarme continua.
+4. A tela de interrupção abre e a sirene toca de forma contínua. **Recarregue a página**: o alarme continua.
 5. Clique em **Alterar Duração / Reagendar**, escolha **+15 min** e confirme: o alarme pausa pelo tempo acrescentado e a agenda mostra o ajuste.
 6. Quando o alarme voltar, clique em **Informar Atividade Realizada**: o som para na hora e a atividade fica concluída.
 

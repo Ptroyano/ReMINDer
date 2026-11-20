@@ -43,7 +43,7 @@ sequenceDiagram
     Note over B: 09:00 chega
     F->>B: GET /api/alarme/ativo
     B-->>F: alarme: Estudar Algoritmos
-    F-->>L: Tela de interrupção + sinal sonoro a cada N s
+    F-->>L: Tela de interrupção + sirene repetida a cada N s (padrão 3 s, quase contínua)
     alt Informar realizada
         L->>F: Clica em "Informar Atividade Realizada"
         F->>B: POST /api/tarefas/{id}/concluir
@@ -107,7 +107,7 @@ erDiagram
 | `hora_inicio` | TEXT | Horário de início, `HH:MM` |
 | `duracao_min` | INTEGER (5–1440) | Duração prevista em minutos |
 | `neurofeedback` | INTEGER | 1 liga o alarme persistente |
-| `intervalo_seg` | INTEGER | Intervalo entre os sinais sonoros (5–600 s) |
+| `intervalo_seg` | INTEGER | Intervalo entre os sinais sonoros (2–600 s; padrão 3 s = alarme contínuo) |
 | `status` | TEXT | `agendada` ou `concluida` |
 | `silenciado_ate` | TEXT | Até quando o alarme está pausado por acréscimo de tempo |
 | `concluida_em` | TEXT | Momento em que foi informada como realizada |

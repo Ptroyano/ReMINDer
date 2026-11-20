@@ -14,7 +14,8 @@
   async function api(caminho, { method = "GET", body } = {}) {
     const res = await fetch("/api" + caminho, {
       method,
-      headers: { "Content-Type": "application/json" },
+      // X-Tz-Offset: o servidor usa a hora local do navegador (ex.: Codespaces roda em UTC)
+      headers: { "Content-Type": "application/json", "X-Tz-Offset": String(new Date().getTimezoneOffset()) },
       body: body ? JSON.stringify(body) : undefined,
     });
     let dados = null;
@@ -105,23 +106,31 @@
     atualizarBotoesSom();
   }
 
+  // Sirene: 8 bipes altos alternando dois tons (~2 s). Com intervalo de 3 s o som
+  // fica praticamente contínuo; intervalos maiores deixam pausas entre as sirenes.
   function tocarSinal() {
     if (audioLigado()) {
       const t0 = audioCtx.currentTime;
-      [0, 0.3, 0.6].forEach((deslocamento) => {
+      const mestre = audioCtx.createGain();
+      mestre.gain.value = 0.9;
+      const compressor = audioCtx.createDynamicsCompressor();
+      mestre.connect(compressor).connect(audioCtx.destination);
+      for (let i = 0; i < 8; i++) {
+        const inicio = t0 + i * 0.25;
         const osc = audioCtx.createOscillator();
         const ganho = audioCtx.createGain();
-        osc.type = "triangle";
-        osc.frequency.value = 880;
-        ganho.gain.setValueAtTime(0.0001, t0 + deslocamento);
-        ganho.gain.exponentialRampToValueAtTime(0.4, t0 + deslocamento + 0.03);
-        ganho.gain.exponentialRampToValueAtTime(0.0001, t0 + deslocamento + 0.24);
-        osc.connect(ganho).connect(audioCtx.destination);
-        osc.start(t0 + deslocamento);
-        osc.stop(t0 + deslocamento + 0.26);
-      });
+        osc.type = "square";
+        osc.frequency.value = i % 2 === 0 ? 988 : 740;
+        ganho.gain.setValueAtTime(0.0001, inicio);
+        ganho.gain.exponentialRampToValueAtTime(0.7, inicio + 0.02);
+        ganho.gain.setValueAtTime(0.7, inicio + 0.18);
+        ganho.gain.exponentialRampToValueAtTime(0.0001, inicio + 0.23);
+        osc.connect(ganho).connect(mestre);
+        osc.start(inicio);
+        osc.stop(inicio + 0.24);
+      }
     }
-    try { if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]); } catch (_) { /* ignora */ }
+    try { if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 300, 100, 300]); } catch (_) { /* ignora */ }
   }
 
   ["pointerdown", "keydown", "touchstart"].forEach((ev) =>
@@ -135,7 +144,7 @@
     if (t.alarme_ativo) selos.push('<span class="selo selo-toca">Alarme tocando</span>');
     if (t.conflito) selos.push('<span class="selo selo-conflito">Horários se sobrepõem</span>');
     if (t.neurofeedback && t.status === "agendada") {
-      selos.push(`<span class="selo selo-neuro">Neuro-feedback a cada ${t.intervalo_seg}s</span>`);
+      selos.push(`<span class="selo selo-neuro">Alarme: ${t.intervalo_seg <= 3 ? "contínuo" : "a cada " + t.intervalo_seg + "s"}</span>`);
     }
 
     let acoes = "";
